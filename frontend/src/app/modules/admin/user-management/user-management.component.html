@@ -1,0 +1,222 @@
+<div class="user-management">
+  <div class="page-header animate-fade-in">
+    <div>
+      <h1>User Management</h1>
+      <p>{{ pagination().total }} users registered</p>
+    </div>
+    <button class="btn-primary" (click)="openCreateModal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      Add User
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar glass-card-static animate-slide-up">
+    <div class="search-wrapper">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" [(ngModel)]="searchQuery" (input)="onSearch()" placeholder="Search users..." class="search-input"/>
+    </div>
+    <select [(ngModel)]="filterRole" (change)="onFilterChange()" class="filter-select">
+      <option value="">All Roles</option>
+      <option value="admin">Admin</option>
+      <option value="user">User</option>
+    </select>
+    <select [(ngModel)]="filterStatus" (change)="onFilterChange()" class="filter-select">
+      <option value="">All Status</option>
+      <option value="active">Active</option>
+      <option value="inactive">Inactive</option>
+      <option value="suspended">Suspended</option>
+    </select>
+  </div>
+
+  <!-- Users Table -->
+  <div class="table-card glass-card-static animate-slide-up" style="animation-delay: 0.1s;">
+    @if (isLoading()) {
+      <div class="table-skeleton">
+        @for (i of [1,2,3,4,5,6]; track i) {
+          <div class="skeleton-row">
+            <div class="skeleton skeleton-avatar"></div>
+            <div class="skeleton skeleton-text" style="width: 25%;"></div>
+            <div class="skeleton skeleton-text" style="width: 15%;"></div>
+            <div class="skeleton skeleton-text" style="width: 12%;"></div>
+            <div class="skeleton skeleton-text" style="width: 10%;"></div>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Department</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Verifications</th>
+              <th>Risk Score</th>
+              <th>Joined</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (user of users(); track user.userId) {
+              <tr class="table-row">
+                <td>
+                  <div class="user-cell">
+                    <div class="user-avatar-sm">{{ getUserInitials(user) }}</div>
+                    <div>
+                      <div class="user-name">{{ user.firstName }} {{ user.lastName }}</div>
+                      <div class="user-email">{{ user.email }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="dept-label">{{ user.department }}</span></td>
+                <td><span class="badge badge-info">{{ user.role }}</span></td>
+                <td><span class="badge" [ngClass]="getStatusClass(user.status)">{{ user.status }}</span></td>
+                <td><span class="mono-text">{{ user.verificationCount }}</span></td>
+                <td><span class="mono-text" [style.color]="user.riskScore > 60 ? '#f87171' : user.riskScore > 30 ? '#fbbf24' : '#4ade80'">{{ user.riskScore }}</span></td>
+                <td><span class="date-text">{{ formatDate(user.createdAt) }}</span></td>
+                <td>
+                  <div class="action-group">
+                    <button class="icon-btn" (click)="openEditModal(user)" title="Edit">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                    </button>
+                    <button class="icon-btn icon-btn-danger" (click)="openDeleteModal(user)" title="Delete">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      @if (pagination().totalPages > 1) {
+        <div class="pagination">
+          <button class="page-btn" (click)="goToPage(pagination().page - 1)" [disabled]="pagination().page <= 1">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          @for (p of paginationPages; track p) {
+            <button class="page-btn" [class.page-btn-active]="p === pagination().page" (click)="goToPage(p)">{{ p }}</button>
+          }
+          <button class="page-btn" (click)="goToPage(pagination().page + 1)" [disabled]="pagination().page >= pagination().totalPages">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      }
+    }
+  </div>
+</div>
+
+<!-- Create User Modal -->
+@if (showCreateModal()) {
+  <div class="modal-backdrop" (click)="showCreateModal.set(false)">
+    <div class="modal-card glass-card animate-slide-up" (click)="$event.stopPropagation()">
+      <h3>Create New User</h3>
+      <div class="modal-form">
+        <div class="form-row">
+          <div class="input-group"><label>First Name</label><input [(ngModel)]="newUser.firstName" class="glass-input" placeholder="First name"/></div>
+          <div class="input-group"><label>Last Name</label><input [(ngModel)]="newUser.lastName" class="glass-input" placeholder="Last name"/></div>
+        </div>
+        <div class="input-group"><label>Email</label><input type="email" [(ngModel)]="newUser.email" class="glass-input" placeholder="user&#64;mploychek.io"/></div>
+        <div class="input-group"><label>Password</label><input type="password" [(ngModel)]="newUser.password" class="glass-input" placeholder="Min 6 characters"/></div>
+        <div class="form-row">
+          <div class="input-group">
+            <label>Department</label>
+            <select [(ngModel)]="newUser.department" class="filter-select full-width">
+              <option>General</option><option>Engineering</option><option>Human Resources</option><option>Finance</option><option>Operations</option><option>Legal</option><option>Marketing</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>Role</label>
+            <select [(ngModel)]="newUser.role" class="filter-select full-width">
+              <option value="user">User</option><option value="admin">Admin</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-ghost" (click)="showCreateModal.set(false)">Cancel</button>
+        <button class="btn-primary" (click)="createUser()" [disabled]="isSaving()">
+          @if (isSaving()) { <div class="spinner-sm"></div> Creating... } @else { Create User }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Edit User Modal -->
+@if (showEditModal()) {
+  <div class="modal-backdrop" (click)="showEditModal.set(false)">
+    <div class="modal-card glass-card animate-slide-up" (click)="$event.stopPropagation()">
+      <h3>Edit User</h3>
+      <div class="modal-form">
+        <div class="form-row">
+          <div class="input-group"><label>First Name</label><input [(ngModel)]="editData.firstName" class="glass-input"/></div>
+          <div class="input-group"><label>Last Name</label><input [(ngModel)]="editData.lastName" class="glass-input"/></div>
+        </div>
+        <div class="form-row">
+          <div class="input-group">
+            <label>Department</label>
+            <select [(ngModel)]="editData.department" class="filter-select full-width">
+              <option>General</option><option>Engineering</option><option>Human Resources</option><option>Finance</option><option>Operations</option><option>Legal</option><option>Marketing</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>Status</label>
+            <select [(ngModel)]="editData.status" class="filter-select full-width">
+              <option value="active">Active</option><option value="inactive">Inactive</option><option value="suspended">Suspended</option>
+            </select>
+          </div>
+        </div>
+        <div class="input-group">
+          <label>Role</label>
+          <select [(ngModel)]="editData.role" class="filter-select full-width">
+            <option value="user">User</option><option value="admin">Admin</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-ghost" (click)="showEditModal.set(false)">Cancel</button>
+        <button class="btn-primary" (click)="saveEdit()" [disabled]="isSaving()">
+          @if (isSaving()) { <div class="spinner-sm"></div> Saving... } @else { Save Changes }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Delete Confirmation Modal -->
+@if (showDeleteModal()) {
+  <div class="modal-backdrop" (click)="showDeleteModal.set(false)">
+    <div class="modal-card glass-card animate-slide-up modal-card-sm" (click)="$event.stopPropagation()">
+      <div class="delete-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+      </div>
+      <h3>Delete User</h3>
+      <p class="delete-text">Are you sure you want to delete <strong>{{ selectedUser()?.firstName }} {{ selectedUser()?.lastName }}</strong>? This action cannot be undone.</p>
+      <div class="modal-actions">
+        <button class="btn-ghost" (click)="showDeleteModal.set(false)">Cancel</button>
+        <button class="btn-danger" (click)="confirmDelete()" [disabled]="isSaving()">
+          @if (isSaving()) { <div class="spinner-sm"></div> } @else { Delete }
+        </button>
+      </div>
+    </div>
+  </div>
+}

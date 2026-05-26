@@ -1,0 +1,232 @@
+<div class="dashboard">
+  <!-- Welcome Section -->
+  <section class="welcome-section animate-fade-in">
+    <div class="welcome-text">
+      <h1>{{ greeting() }}, {{ authService.currentUser()?.firstName }}</h1>
+      <p>Here's your verification workflow overview</p>
+    </div>
+    <div class="welcome-meta">
+      <span class="meta-badge">
+        <span class="meta-dot"></span>
+        {{ authService.currentUser()?.department }}
+      </span>
+    </div>
+  </section>
+
+  <!-- Async Processing Banner -->
+  @if (activeProcessing()) {
+    <div class="processing-banner glass-card animate-slide-up">
+      <div class="processing-header">
+        <div class="processing-pulse"></div>
+        <span class="processing-label">Async Verification Pipeline Active</span>
+        <span class="processing-id">{{ activeProcessing()?.recordId }}</span>
+      </div>
+      <div class="processing-stage">
+        <span>{{ activeProcessing()?.stage }}</span>
+        <span class="processing-percent">{{ activeProcessing()?.progress }}%</span>
+      </div>
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" [style.width]="getProgressWidth(activeProcessing()?.progress || 0)"></div>
+      </div>
+    </div>
+  }
+
+  <!-- Stats Grid -->
+  @if (isLoading()) {
+    <div class="stats-grid">
+      @for (i of [1,2,3,4]; track i) {
+        <div class="stat-card skeleton" style="height: 120px;"></div>
+      }
+    </div>
+  } @else if (stats()) {
+    <div class="stats-grid animate-slide-up">
+      <div class="stat-card glass-card">
+        <div class="stat-icon stat-icon-blue">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value">{{ stats()!.total }}</span>
+          <span class="stat-label">Total Verifications</span>
+        </div>
+      </div>
+
+      <div class="stat-card glass-card">
+        <div class="stat-icon stat-icon-green">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value">{{ stats()!.completed }}</span>
+          <span class="stat-label">Completed</span>
+        </div>
+      </div>
+
+      <div class="stat-card glass-card">
+        <div class="stat-icon stat-icon-amber">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value">{{ stats()!.processing }}</span>
+          <span class="stat-label">In Progress</span>
+        </div>
+      </div>
+
+      <div class="stat-card glass-card">
+        <div class="stat-icon stat-icon-purple">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value">{{ stats()!.successRate }}%</span>
+          <span class="stat-label">Success Rate</span>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- AI Risk Score Section -->
+  @if (stats()) {
+    <div class="risk-section glass-card-static animate-slide-up" style="animation-delay: 0.1s;">
+      <div class="section-header">
+        <h2>AI Trust Score</h2>
+        <span class="badge badge-info">AI-Powered</span>
+      </div>
+      <div class="risk-content">
+        <div class="trust-meter">
+          <svg width="160" height="100" viewBox="0 0 160 100">
+            <path d="M 20 90 A 60 60 0 0 1 140 90" fill="none" stroke="var(--bg-elevated)" stroke-width="10" stroke-linecap="round"/>
+            <path d="M 20 90 A 60 60 0 0 1 140 90" fill="none"
+              [attr.stroke]="getConfidenceColor(stats()!.avgConfidence)"
+              stroke-width="10" stroke-linecap="round"
+              [attr.stroke-dasharray]="(stats()!.avgConfidence / 100 * 188) + ' 188'"
+              style="transition: stroke-dasharray 1s ease;"/>
+            <text x="80" y="75" text-anchor="middle" fill="var(--text-primary)" font-size="28" font-weight="700">{{ stats()!.avgConfidence }}</text>
+            <text x="80" y="92" text-anchor="middle" fill="var(--text-muted)" font-size="10">Confidence</text>
+          </svg>
+        </div>
+        <div class="risk-breakdown">
+          <div class="risk-item">
+            <span class="risk-dot risk-dot-low"></span>
+            <span class="risk-label">Low Risk</span>
+            <span class="risk-count">{{ stats()!.byRisk['low'] || 0 }}</span>
+          </div>
+          <div class="risk-item">
+            <span class="risk-dot risk-dot-medium"></span>
+            <span class="risk-label">Medium Risk</span>
+            <span class="risk-count">{{ stats()!.byRisk['medium'] || 0 }}</span>
+          </div>
+          <div class="risk-item">
+            <span class="risk-dot risk-dot-high"></span>
+            <span class="risk-label">High Risk</span>
+            <span class="risk-count">{{ stats()!.byRisk['high'] || 0 }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Verification Records Table -->
+  <div class="table-section glass-card-static animate-slide-up" style="animation-delay: 0.2s;">
+    <div class="section-header">
+      <h2>Verification Records</h2>
+      <span class="record-count">{{ verifications().length }} records</span>
+    </div>
+
+    @if (isLoading()) {
+      <div class="table-skeleton">
+        @for (i of [1,2,3,4,5]; track i) {
+          <div class="skeleton-row">
+            <div class="skeleton skeleton-text" style="width: 30%;"></div>
+            <div class="skeleton skeleton-text" style="width: 15%;"></div>
+            <div class="skeleton skeleton-text" style="width: 20%;"></div>
+            <div class="skeleton skeleton-text" style="width: 10%;"></div>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Candidate</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Confidence</th>
+              <th>Risk</th>
+              <th>Progress</th>
+              <th>Date</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (record of verifications(); track trackByRecordId) {
+              <tr class="table-row">
+                <td>
+                  <div class="candidate-cell">
+                    <div class="candidate-avatar">{{ record.candidateName[0] }}</div>
+                    <div>
+                      <div class="candidate-name">{{ record.candidateName }}</div>
+                      <div class="candidate-id">{{ record.recordId }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="type-label">{{ record.verificationType }}</span>
+                </td>
+                <td>
+                  <span class="badge" [ngClass]="statusColors[record.status]">
+                    @if (record.status === 'processing' || record.status === 'cross-validating') {
+                      <span class="status-pulse-dot"></span>
+                    }
+                    {{ record.status }}
+                  </span>
+                </td>
+                <td>
+                  <span class="confidence-score" [style.color]="getConfidenceColor(record.confidenceScore)">
+                    {{ record.confidenceScore }}%
+                  </span>
+                </td>
+                <td>
+                  <span class="badge" [ngClass]="riskColors[record.riskLevel]">
+                    {{ record.riskLevel }}
+                  </span>
+                </td>
+                <td>
+                  <div class="progress-cell">
+                    <div class="mini-progress-track">
+                      <div class="mini-progress-fill" [style.width]="getProgressWidth(record.completionProgress)"></div>
+                    </div>
+                    <span class="progress-text">{{ record.completionProgress }}%</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="date-text">{{ formatDate(record.createdAt) }}</span>
+                </td>
+                <td>
+                  @if (record.status !== 'completed' && record.status !== 'failed') {
+                    <button class="action-btn" (click)="simulateProcessing(record)" [disabled]="!!activeProcessing()">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5 3 19 12 5 21 5 3"/>
+                      </svg>
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>

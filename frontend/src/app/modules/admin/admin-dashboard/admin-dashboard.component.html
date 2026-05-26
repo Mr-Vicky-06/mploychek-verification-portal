@@ -1,0 +1,114 @@
+<div class="admin-dashboard">
+  <div class="page-header animate-fade-in">
+    <div>
+      <h1>Admin Dashboard</h1>
+      <p>Enterprise verification analytics and system overview</p>
+    </div>
+    <a routerLink="/admin/users" class="btn-primary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <line x1="23" y1="11" x2="17" y2="11"/>
+        <line x1="20" y1="8" x2="20" y2="14"/>
+      </svg>
+      Manage Users
+    </a>
+  </div>
+
+  <!-- Overview Stats -->
+  @if (isLoading()) {
+    <div class="overview-grid">
+      @for (i of [1,2,3,4]; track i) {
+        <div class="skeleton" style="height: 100px; border-radius: 1rem;"></div>
+      }
+    </div>
+  } @else if (analytics()) {
+    <div class="overview-grid animate-slide-up">
+      <div class="overview-card glass-card">
+        <div class="ov-label">Total Users</div>
+        <div class="ov-value">{{ analytics()!.overview.totalUsers }}</div>
+        <div class="ov-meta">{{ analytics()!.overview.activeUsers }} active</div>
+      </div>
+      <div class="overview-card glass-card">
+        <div class="ov-label">Verifications</div>
+        <div class="ov-value">{{ analytics()!.overview.totalVerifications }}</div>
+        <div class="ov-meta">{{ analytics()!.overview.successRate }}% success</div>
+      </div>
+      <div class="overview-card glass-card">
+        <div class="ov-label">Avg Processing</div>
+        <div class="ov-value">{{ analytics()!.overview.avgProcessingTime }}<span class="ov-unit">min</span></div>
+        <div class="ov-meta">per verification</div>
+      </div>
+      <div class="overview-card glass-card">
+        <div class="ov-label">AI Confidence</div>
+        <div class="ov-value">{{ analytics()!.overview.avgConfidence }}<span class="ov-unit">%</span></div>
+        <div class="ov-meta">average score</div>
+      </div>
+    </div>
+  }
+
+  <!-- Charts Row -->
+  <div class="charts-row">
+    <div class="chart-card glass-card-static animate-slide-up" style="animation-delay: 0.1s;">
+      <h3>Weekly Activity</h3>
+      @if (isLoading()) {
+        <div class="skeleton" style="height: 250px;"></div>
+      } @else {
+        <div class="chart-wrapper">
+          <canvas #weeklyChart></canvas>
+        </div>
+      }
+    </div>
+
+    <div class="chart-card chart-card-small glass-card-static animate-slide-up" style="animation-delay: 0.15s;">
+      <h3>Risk Distribution</h3>
+      @if (isLoading()) {
+        <div class="skeleton" style="height: 250px;"></div>
+      } @else {
+        <div class="chart-wrapper">
+          <canvas #riskChart></canvas>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Confidence Distribution -->
+  @if (analytics()) {
+    <div class="confidence-section glass-card-static animate-slide-up" style="animation-delay: 0.2s;">
+      <h3>AI Confidence Distribution</h3>
+      <div class="confidence-bars">
+        @for (item of analytics()!.confidenceDistribution; track item.range) {
+          <div class="conf-bar-row">
+            <span class="conf-range">{{ item.range }}</span>
+            <div class="conf-bar-track">
+              <div class="conf-bar-fill"
+                [style.width.%]="analytics()!.overview.totalVerifications > 0 ? (item.count / analytics()!.overview.totalVerifications * 100) : 0">
+              </div>
+            </div>
+            <span class="conf-count">{{ item.count }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Recent Activity -->
+  @if (analytics()) {
+    <div class="activity-section glass-card-static animate-slide-up" style="animation-delay: 0.25s;">
+      <h3>Recent Activity</h3>
+      <div class="activity-list">
+        @for (item of analytics()!.recentActivity; track item.recordId) {
+          <div class="activity-item">
+            <div class="activity-avatar">{{ item.candidateName[0] }}</div>
+            <div class="activity-content">
+              <span class="activity-name">{{ item.candidateName }}</span>
+              <span class="activity-type">{{ item.type }} verification</span>
+            </div>
+            <span class="badge" [ngClass]="getStatusClass(item.status)">{{ item.status }}</span>
+            <span class="activity-time">{{ formatDate(item.timestamp) }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>
